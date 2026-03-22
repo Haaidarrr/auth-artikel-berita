@@ -1,162 +1,80 @@
-const { PrismaClient } = require('@prisma/client');
-const db = new PrismaClient();
+const {
+  tambahArtikelService,
+  editArtikelService,
+  hapusArtikelService,
+  publishArtikelService,
+  cariArtikelService
+} = require('../services/artikelService');
 
-const tambahArtikel = async (req, res) => {
+const tambahArtikel = async (req, res, next) => {
   try {
     const { title, content } = req.body;
-
-    if (!title || !content) {
-      return res.status(400).json({
-        message: 'Title dan content wajib diisi'
-      });
-    }
-
-    const artikelBaru = await db.article.create({
-      data: {
-        title,
-        content,
-        published: false
-      }
-    });
+    const artikelBaru = await tambahArtikelService(title, content);
 
     res.status(201).json({
       message: 'Artikel berhasil ditambahkan',
       data: artikelBaru
     });
   } catch (error) {
-    res.status(400).json({
-      message: error.message
-    });
+    next(error);
   }
 };
 
-const editArtikel = async (req, res) => {
+const editArtikel = async (req, res, next) => {
   try {
     const idArtikel = Number(req.params.id);
     const { title, content } = req.body;
 
-    const artikelAda = await db.article.findUnique({
-      where: {
-        id: idArtikel
-      }
-    });
-
-    if (!artikelAda) {
-      return res.status(404).json({
-        message: 'Artikel tidak ditemukan'
-      });
-    }
-
-    const artikelUpdate = await db.article.update({
-      where: {
-        id: idArtikel
-      },
-      data: {
-        title,
-        content
-      }
-    });
+    const artikelUpdate = await editArtikelService(idArtikel, title, content);
 
     res.json({
       message: 'Artikel berhasil diupdate',
       data: artikelUpdate
     });
   } catch (error) {
-    res.status(400).json({
-      message: error.message
-    });
+    next(error);
   }
 };
 
-const hapusArtikel = async (req, res) => {
+const hapusArtikel = async (req, res, next) => {
   try {
     const idArtikel = Number(req.params.id);
 
-    const artikelAda = await db.article.findUnique({
-      where: {
-        id: idArtikel
-      }
-    });
-
-    if (!artikelAda) {
-      return res.status(404).json({
-        message: 'Artikel tidak ditemukan'
-      });
-    }
-
-    await db.article.delete({
-      where: {
-        id: idArtikel
-      }
-    });
+    await hapusArtikelService(idArtikel);
 
     res.json({
       message: 'Artikel berhasil dihapus'
     });
   } catch (error) {
-    res.status(400).json({
-      message: error.message
-    });
+    next(error);
   }
 };
 
-const publishArtikel = async (req, res) => {
+const publishArtikel = async (req, res, next) => {
   try {
     const idArtikel = Number(req.params.id);
-
-    const artikelAda = await db.article.findUnique({
-      where: {
-        id: idArtikel
-      }
-    });
-
-    if (!artikelAda) {
-      return res.status(404).json({
-        message: 'Artikel tidak ditemukan'
-      });
-    }
-
-    const artikelPublish = await db.article.update({
-      where: {
-        id: idArtikel
-      },
-      data: {
-        published: true
-      }
-    });
+    const artikelPublish = await publishArtikelService(idArtikel);
 
     res.json({
       message: 'Artikel berhasil dipublish',
       data: artikelPublish
     });
   } catch (error) {
-    res.status(400).json({
-      message: error.message
-    });
+    next(error);
   }
 };
 
-const cariArtikel = async (req, res) => {
+const cariArtikel = async (req, res, next) => {
   try {
     const keyword = req.query.q || '';
-
-    const hasilCari = await db.article.findMany({
-      where: {
-        title: {
-          contains: keyword,
-          mode: 'insensitive'
-        }
-      }
-    });
+    const hasilCari = await cariArtikelService(keyword);
 
     res.json({
       message: 'Data artikel berhasil diambil',
       data: hasilCari
     });
   } catch (error) {
-    res.status(400).json({
-      message: error.message
-    });
+    next(error);
   }
 };
 
